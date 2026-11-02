@@ -1,0 +1,17 @@
+[
+  {
+    "label": "Review this branch",
+    "command": "claude 'Review the changes on this branch against main'",
+    "cwd": "~/code/my-project"
+  },
+  {
+    "label": "Ask in background",
+    "command": "claude -p {prompt} | wl-copy && notify-send 'Claude' 'Answer copied'",
+    "terminal": false
+  },
+  {
+    "label": "Usage report",
+    "command": "npx ccusage@latest",
+    "icon": "utilities-system-monitor-symbolic"
+  }
+]
