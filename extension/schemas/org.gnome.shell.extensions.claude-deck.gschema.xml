@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<schemalist>
+  <enum id="org.gnome.shell.extensions.claude-deck.position">
+    <value nick="left" value="0"/>
+    <value nick="center" value="1"/>
+    <value nick="right" value="2"/>
+  </enum>
+  <enum id="org.gnome.shell.extensions.claude-deck.metric">
+    <value nick="messages" value="0"/>
+    <value nick="tools" value="1"/>
+    <value nick="sessions" value="2"/>
+  </enum>
+  <enum id="org.gnome.shell.extensions.claude-deck.icon-color-mode">
+    <value nick="claude" value="0"/>
+    <value nick="panel" value="1"/>
+    <value nick="custom" value="2"/>
+  </enum>
+  <enum id="org.gnome.shell.extensions.claude-deck.icon">
+    <value nick="claude" value="0"/>
+    <value nick="sparkle" value="1"/>
+  </enum>
+
+  <schema id="org.gnome.shell.extensions.claude-deck" path="/org/gnome/shell/extensions/claude-deck/">
+    <!-- panel button -->
+    <key name="panel-position" enum="org.gnome.shell.extensions.claude-deck.position">
+      <default>'right'</default>
+      <summary>Panel area</summary>
+    </key>
+    <key name="panel-index" type="i">
+      <range min="0" max="20"/>
+      <default>0</default>
+      <summary>Position inside the panel area</summary>
+    </key>
+    <key name="icon" enum="org.gnome.shell.extensions.claude-deck.icon">
+      <default>'claude'</default>
+      <summary>Panel icon</summary>
+    </key>
+    <key name="icon-color-mode" enum="org.gnome.shell.extensions.claude-deck.icon-color-mode">
+      <default>'claude'</default>
+      <summary>Icon color: orange, panel text (accent while working) or custom</summary>
+    </key>
+    <key name="icon-color" type="s">
+      <default>'#d97757'</default>
+      <summary>Custom icon color</summary>
+    </key>
+    <key name="pulse-when-busy" type="b">
+      <default>true</default>
+      <summary>Pulse the icon while a session is working</summary>
+    </key>
+    <key name="middle-click-new" type="b">
+      <default>true</default>
+      <summary>Middle click on the icon starts a new session</summary>
+    </key>
+
+    <!-- menu sections -->
+    <key name="show-prompt" type="b"><default>true</default><summary>Prompt field</summary></key>
+    <key name="show-limits" type="b"><default>true</default><summary>Usage limits</summary></key>
+    <key name="show-today" type="b"><default>true</default><summary>Today tiles</summary></key>
+    <key name="show-chart" type="b"><default>true</default><summary>14-day chart</summary></key>
+    <key name="show-sessions" type="b"><default>true</default><summary>Live sessions</summary></key>
+    <key name="show-projects" type="b"><default>true</default><summary>Recent projects</summary></key>
+    <key name="show-actions" type="b"><default>true</default><summary>Custom actions from actions.json</summary></key>
+    <key name="projects-count" type="i">
+      <range min="1" max="20"/>
+      <default>6</default>
+      <summary>Number of recent projects</summary>
+    </key>
+    <key name="chart-metric" enum="org.gnome.shell.extensions.claude-deck.metric">
+      <default>'messages'</default>
+      <summary>Chart metric</summary>
+    </key>
+
+    <!-- launching -->
+    <key name="terminal" type="s">
+      <default>'auto'</default>
+      <summary>Terminal: auto, a known terminal name, or a command prefix that runs the arguments after it</summary>
+    </key>
+    <key name="shell" type="s">
+      <default>''</default>
+      <summary>Interactive shell used to run claude (empty: $SHELL)</summary>
+    </key>
+    <key name="default-directory" type="s">
+      <default>''</default>
+      <summary>Directory for new sessions (empty: home)</summary>
+    </key>
+    <key name="claude-args" type="s">
+      <default>''</default>
+      <summary>Extra arguments passed to claude</summary>
+    </key>
+
+    <!-- shortcuts -->
+    <key name="new-session" type="as">
+      <default><![CDATA[['<Super>c']]]></default>
+      <summary>Start a new session</summary>
+    </key>
+    <key name="toggle-menu" type="as">
+      <default><![CDATA[['<Super><Alt>c']]]></default>
+      <summary>Open the menu</summary>
+    </key>
+
+    <!-- behaviour -->
+    <key name="notify-done" type="b">
+      <default>true</default>
+      <summary>Notify when a session finishes while its terminal is not focused</summary>
+    </key>
+    <key name="refresh-seconds" type="u">
+      <range min="10" max="600"/>
+      <default>60</default>
+      <summary>Background refresh interval in seconds</summary>
+    </key>
+  </schema>
+</schemalist>

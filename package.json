@@ -1,0 +1,14 @@
+{
+  "name": "claude-deck",
+  "private": true,
+  "type": "module",
+  "description": "Development tooling for Deck for Claude Code (lint only).",
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "lint": "eslint extension tests"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0"
+  }
+}

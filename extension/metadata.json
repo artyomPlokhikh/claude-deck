@@ -1,0 +1,9 @@
+{
+  "uuid": "claude-deck@artyomplokhikh.github.io",
+  "name": "Deck for Claude Code",
+  "description": "Launch, track and get notified about Claude Code sessions from the top bar: prompt field, live sessions with jump-to-terminal, recent projects, usage limits and daily stats.\n\nUnofficial, not affiliated with Anthropic.",
+  "shell-version": ["50"],
+  "settings-schema": "org.gnome.shell.extensions.claude-deck",
+  "url": "https://github.com/artyomPlokhikh/claude-deck",
+  "version-name": "1.0"
+}
