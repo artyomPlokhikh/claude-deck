@@ -183,7 +183,7 @@ export default class DeckPreferences extends ExtensionPreferences {
         panel.add(button);
         button.add(enumRow(s, 'panel-position', 'Area', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']]));
         button.add(spinRow(s, 'panel-index', 'Index', 0, 20));
-        button.add(enumRow(s, 'icon', 'Icon', [['claude', 'Claude'], ['sparkle', 'Sparkle']]));
+        button.add(enumRow(s, 'icon', 'Icon', [['sparkle', 'Sparkle'], ['burst', 'Burst']]));
         button.add(enumRow(s, 'icon-color-mode', 'Icon color',
             [['claude', 'Orange'], ['panel', 'Panel text'], ['custom', 'Custom']]));
         button.add(colorRow(s, 'icon-color', 'Custom color', 'icon-color-mode', 'custom'));
@@ -192,7 +192,6 @@ export default class DeckPreferences extends ExtensionPreferences {
 
         const sections = new Adw.PreferencesGroup({title: 'Menu'});
         panel.add(sections);
-        sections.add(switchRow(s, 'show-prompt', 'Prompt'));
         sections.add(switchRow(s, 'show-limits', 'Limits'));
         sections.add(switchRow(s, 'show-today', 'Today'));
         sections.add(switchRow(s, 'show-chart', '14 days'));

@@ -71,13 +71,11 @@ export function runInTerminal({cwd, script, terminal, shell}) {
  *
  * @param {string} extraArgs user setting with extra arguments
  * @param {string[]} args arguments such as --continue
- * @param {string} prompt initial prompt, may be empty
  * @returns {string}
  */
-export function claudeCommand(extraArgs, args = [], prompt = '') {
+export function claudeCommand(extraArgs, args = []) {
     const extra = extraArgs?.trim() ? GLib.shell_parse_argv(extraArgs)[1] : [];
     const argv = ['claude', ...extra, ...args];
-    if (prompt) argv.push(prompt);
     return quote(argv);
 }
 

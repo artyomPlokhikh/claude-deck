@@ -19,7 +19,7 @@ import {findWindow} from './lib/windows.js';
 // Settings that change how the button or menu is built; they rebuild it.
 const LAYOUT_KEYS = new Set([
     'panel-position', 'panel-index', 'icon', 'icon-color-mode', 'icon-color', 'pulse-when-busy',
-    'middle-click-new', 'show-prompt', 'show-limits', 'show-today', 'show-chart',
+    'middle-click-new', 'show-limits', 'show-today', 'show-chart',
     'show-sessions', 'show-projects', 'show-actions', 'projects-count', 'chart-metric', 'new-session',
 ]);
 
@@ -43,8 +43,8 @@ export default class DeckExtension extends Extension {
 
         this._userConfig = new UserConfig(() => this._button?.setUserActions());
         this._handlers = {
-            launch: (dir, args, prompt) => this.launch(dir, args, prompt),
-            runAction: (action, prompt) => this.runAction(action, prompt),
+            launch: (dir, args) => this.launch(dir, args),
+            runAction: action => this.runAction(action),
             focusSession: s => this.focusSession(s),
             refresh: () => this.refresh(),
             openPreferences: () => this.openPreferences(),
@@ -262,21 +262,20 @@ export default class DeckExtension extends Extension {
         };
     }
 
-    launch(dir, args, prompt = '') {
+    launch(dir, args) {
         try {
-            const cmd = claudeCommand(this.settings.get_string('claude-args'), args, prompt);
+            const cmd = claudeCommand(this.settings.get_string('claude-args'), args);
             runInTerminal(this._terminalOptions(dir, cmd));
         } catch (e) {
             Main.notifyError('Deck for Claude Code', e.message);
         }
     }
 
-    // Custom action from actions.json. {prompt} is replaced by the typed prompt, shell-quoted.
-    runAction(action, prompt) {
+    // Custom action from actions.json.
+    runAction(action) {
         try {
-            const command = action.command.replaceAll('{prompt}', GLib.shell_quote(prompt));
-            if (action.terminal === false) runDetached(action.cwd, command);
-            else runInTerminal(this._terminalOptions(action.cwd, command));
+            if (action.terminal === false) runDetached(action.cwd, action.command);
+            else runInTerminal(this._terminalOptions(action.cwd, action.command));
         } catch (e) {
             Main.notifyError('Deck for Claude Code', `${action.label}: ${e.message}`);
         }

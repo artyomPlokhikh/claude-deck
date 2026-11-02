@@ -90,13 +90,27 @@ export default class Probe {
 
         // stub out launching so no terminal opens
         const calls = [];
-        this.ext.launch = (dir, args, prompt) => calls.push({dir, args, prompt: prompt ?? ''});
-        this.ext.runAction = (a, prompt) => calls.push({action: a.label, prompt});
+        this.ext.launch = (dir, args) => calls.push({dir, args});
+        this.ext.runAction = a => calls.push({action: a.label});
 
         await this._openMenu();
         this._check('data loaded', b._data?.days?.length === 14, JSON.stringify(b._data?.today));
         this._check('sessions listed', b._sessionItems.length === 2, b._sessionItems.length);
         this._check('limits shown', b._fiveItem.visible && b._five.pct.text === '34%', b._five.pct.text);
+        // ages are recomputed on open even when the session rows are reused
+        b.menu.close();
+        await wait(300);
+        const realNow = Date.now;
+        Date.now = () => realNow() + 10 * 60000;
+        b.menu.open();
+        await wait(300);
+        const ages = b._sessionItems.map(it => it._meta.text);
+        Date.now = realNow;
+        this._check('session age refreshes on open', ages.some(t => t.endsWith('· 10m')), ages.join(' | '));
+        b.menu.close();
+        await wait(300);
+        b.menu.open();
+        await wait(500);
         this._check('static rows not insensitive',
             !b.menu.box.get_children().some(c => c.has_style_class_name?.('cd-static') &&
                 c.has_style_pseudo_class('insensitive')), '');
@@ -142,7 +156,6 @@ export default class Probe {
         await this._click(b);
         await wait(500);
         this._check('left click opens the menu', b.menu.isOpen, '');
-        b._entry.text = 'fix the 50% bug';
         b._projects.setSubmenuShown(true);
         await wait(300);
         const proj = b._projects.menu.box.get_children()[0];
@@ -152,14 +165,14 @@ export default class Probe {
         await this._openMenu();
         b._projects.setSubmenuShown(true);
         await wait(300);
-        b._entry.text = 'hello';
         await this._click(b._projects.menu.box.get_children()[1]);
-        this._check('project row launches with the typed prompt',
-            calls.length === 3 && calls[2].prompt === 'hello', JSON.stringify(calls[2]));
+        this._check('project row starts a new session in that folder',
+            calls.length === 3 && calls[2].args.length === 0 && calls[2].dir?.endsWith('/code/blog'),
+            JSON.stringify(calls[2]));
 
         // actions.json: valid, then broken, hot reloaded
         writeFile(`${CONFIG}/actions.json`, JSON.stringify([
-            {label: 'Review current branch', command: 'claude {prompt}', cwd: '~/code/shop-api'},
+            {label: 'Review current branch', command: 'claude review', cwd: '~/code/shop-api'},
             {label: 'Usage report', command: 'npx ccusage', icon: 'utilities-system-monitor-symbolic'},
         ]));
         await wait(1200);
@@ -167,10 +180,8 @@ export default class Probe {
         this._check('actions.json adds menu items', b._userActions.box.get_n_children() === 2,
             b._userActions.box.get_n_children());
         await this._openMenu();
-        b._entry.text = 'x';
         await this._click(b._userActions.box.get_children()[0]);
-        this._check('action runs with prompt', calls.at(-1)?.action === 'Review current branch' &&
-            calls.at(-1)?.prompt === 'x', JSON.stringify(calls.at(-1)));
+        this._check('action runs', calls.at(-1)?.action === 'Review current branch', JSON.stringify(calls.at(-1)));
         writeFile(`${CONFIG}/actions.json`, '[{"label": ');
         await wait(1200);
         const errText = b._userActions.box.get_children()[0]?.get_children()?.[1]?.text ?? '';
@@ -209,10 +220,10 @@ export default class Probe {
             const [, raw] = GLib.file_get_contents(path);
             const d = JSON.parse(new TextDecoder().decode(raw));
             if (d.status === 'busy') {
+                flipped = path;
                 d.status = 'idle';
                 d.statusUpdatedAt = Date.now();
                 writeFile(path, JSON.stringify(d));
-                flipped = true;
             }
         }
         await wait(3000);
@@ -220,6 +231,15 @@ export default class Probe {
             .flatMap(src => src.notifications);
         this._check('finished session sends a notification', flipped && notes.length === 1 &&
             notes[0].body.startsWith('Done'), notes.map(n => `${n.title}: ${n.body}`).join(' | '));
+        if (flipped) {
+            // back to working, so later screenshots show a live session
+            const [, raw] = GLib.file_get_contents(flipped);
+            const d = JSON.parse(new TextDecoder().decode(raw));
+            d.status = 'busy';
+            d.statusUpdatedAt = Date.now() - 40000;
+            writeFile(flipped, JSON.stringify(d));
+            await wait(2000);
+        }
 
         // settings rebuild the button live
         const settings = this.ext.settings;

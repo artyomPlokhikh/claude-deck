@@ -1,6 +1,6 @@
 # Deck for Claude Code
 
-A GNOME Shell extension that puts [Claude Code](https://docs.claude.com/en/docs/claude-code) in the top bar: start sessions with a prompt, jump to the terminal of a running session, get notified when a session finishes, reopen recent projects, and keep an eye on your usage limits.
+A GNOME Shell extension that puts [Claude Code](https://docs.claude.com/en/docs/claude-code) in the top bar: start sessions in any project, jump to the terminal of a running session, get notified when a session finishes, reopen recent projects, and keep an eye on your usage limits.
 
 Unofficial, not affiliated with Anthropic.
 
@@ -11,11 +11,10 @@ Unofficial, not affiliated with Anthropic.
 
 ## Features
 
-- **Prompt field.** Open the menu (<kbd>Super</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>), type, press <kbd>Enter</kbd>: a terminal opens with `claude "your prompt"`. Type a prompt and click a project to start it there instead.
 - **Live sessions.** Every running Claude Code session with its title, folder and status. Click one to focus its terminal window.
 - **Notifications** when a session finishes or needs input while you are in another window. Clicking the notification takes you to the terminal.
 - **Recent projects** from your Claude Code history. Click to start a new session there, or the clock button to continue the last one (`claude --continue`).
-- **New session** (<kbd>Super</kbd>+<kbd>C</kbd> or middle click on the icon), **Continue last**, **Resume…**
+- **New session** (<kbd>Super</kbd>+<kbd>C</kbd> or middle click on the icon), **Continue last**, **Resume…** The menu itself opens with <kbd>Super</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>.
 - **Usage limits**: 5-hour and weekly usage with reset times. See [Limits](#limits).
 - **Stats**: prompts, messages, tool calls and output tokens for today, and a 14-day chart (hover a bar for that day, click the title to switch the metric).
 - **Custom actions** and **custom CSS** that apply instantly, see [Customizing](#customizing).
@@ -73,7 +72,7 @@ Preferences cover position, icon and color, menu sections, terminal, shell, defa
 Two files in `~/.config/claude-deck/` go further and apply as soon as you save them:
 
 - `style.css`: any CSS on top of the built-in style.
-- `actions.json`: your own menu items, for example "review this branch" or "ask in the background and copy the answer".
+- `actions.json`: your own menu items, for example "review this branch" or "summarize this week's commits into the clipboard".
 
 [CUSTOMIZING.md](CUSTOMIZING.md) documents every setting, CSS class and action option. It is written so Claude Code can use it too, so you can just ask:
 

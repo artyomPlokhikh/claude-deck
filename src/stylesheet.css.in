@@ -18,26 +18,11 @@
 .cd-section-title { color: rgba(@FG@, 0.55); font-size: 0.8em; font-weight: bold; }
 .cd-error { color: #e01b24; font-size: 0.9em; }
 
-/* small icon buttons: settings, send, continue */
+/* small icon buttons: settings, continue */
 .cd-icon-button { padding: 5px; border-radius: 8px; color: rgba(@FG@, 0.55); }
 .cd-icon-button:hover, .cd-icon-button:focus { background-color: rgba(@FG@, 0.12); color: rgba(@FG@, 1); }
-.cd-icon-button.cd-send { padding: 7px; background-color: -st-accent-color; color: -st-accent-fg-color; }
-.cd-icon-button.cd-send:hover { background-color: st-lighten(-st-accent-color, 6%); }
 .cd-link-button { padding: 2px 10px; border-radius: 8px; font-size: 0.9em; color: -st-accent-color; }
 .cd-link-button:hover, .cd-link-button:focus { background-color: rgba(@FG@, 0.1); }
-
-/* prompt */
-.cd-entry {
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background-color: rgba(@FG@, 0.08);
-  caret-color: -st-accent-color;
-  selection-background-color: -st-accent-color;
-  selected-color: -st-accent-fg-color;
-}
-.cd-entry:focus { border-color: -st-accent-color; }
-.cd-entry StLabel.hint-text { color: rgba(@FG@, 0.45); }
 
 /* limits */
 .cd-limit { spacing: 10px; }

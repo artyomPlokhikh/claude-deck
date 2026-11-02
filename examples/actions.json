@@ -5,8 +5,9 @@
     "cwd": "~/code/my-project"
   },
   {
-    "label": "Ask in background",
-    "command": "claude -p {prompt} | wl-copy && notify-send 'Claude' 'Answer copied'",
+    "label": "Summarize this week",
+    "command": "claude -p 'Summarize my commits from this week' | wl-copy && notify-send 'Claude' 'Summary copied'",
+    "cwd": "~/code/my-project",
     "terminal": false
   },
   {

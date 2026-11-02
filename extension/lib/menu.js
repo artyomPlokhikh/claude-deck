@@ -156,7 +156,7 @@ class DeckButton extends PanelMenu.Button {
         this._ext = ext;
         this._h = handlers;
         const s = ext.settings;
-        this._opt = Object.fromEntries(['pulse-when-busy', 'show-prompt', 'show-limits',
+        this._opt = Object.fromEntries(['pulse-when-busy', 'show-limits',
             'show-today', 'show-chart', 'show-sessions', 'show-projects', 'show-actions', 'middle-click-new']
             .map(k => [k, s.get_boolean(k)]));
         this._metric = s.get_string('chart-metric');
@@ -194,14 +194,8 @@ class DeckButton extends PanelMenu.Button {
         this.menu.connect('open-state-changed', (_m, open) => {
             if (open) {
                 this._h.refresh();
+                for (const it of this._sessionItems) it.tick();
                 this._startTicker();
-                if (this._entry) {
-                    this._focusId = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                        this._focusId = null;
-                        if (this.menu.isOpen) global.stage.set_key_focus(this._entry);
-                        return GLib.SOURCE_REMOVE;
-                    });
-                }
             } else {
                 this._stopTicker();
             }
@@ -222,23 +216,6 @@ class DeckButton extends PanelMenu.Button {
             this._h.openPreferences();
         }, 'cd-settings'));
         m.addMenuItem(new StaticItem(head, 'cd-header'));
-
-        // prompt
-        if (o['show-prompt']) {
-            this._entry = new St.Entry({style_class: 'cd-entry', hint_text: 'Prompt', can_focus: true, x_expand: true});
-            this._entry.clutter_text.connect('activate', () => this._submit(null));
-            this._entry.clutter_text.connect('key-press-event', (_a, ev) => {
-                if (ev.get_key_symbol() === Clutter.KEY_Escape && this._entry.text) {
-                    this._entry.text = '';
-                    return Clutter.EVENT_STOP;
-                }
-                return Clutter.EVENT_PROPAGATE;
-            });
-            const row = new St.BoxLayout({style_class: 'cd-row', x_expand: true});
-            row.add_child(this._entry);
-            row.add_child(iconButton('go-up-symbolic', () => this._submit(null), 'cd-send'));
-            m.addMenuItem(new StaticItem(row, 'cd-prompt'));
-        }
 
         // limits
         if (o['show-limits']) {
@@ -324,7 +301,7 @@ class DeckButton extends PanelMenu.Button {
         m.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         // built-in actions
-        this._action('New session', () => this._submit(null), fmtAccel(this._ext.settings.get_strv('new-session')[0]));
+        this._action('New session', () => this._newSession(null), fmtAccel(this._ext.settings.get_strv('new-session')[0]));
         this._action('Continue last', () => this._h.launch(null, ['--continue']));
         this._action('Resume…', () => this._h.launch(null, ['--resume']));
         if (o['show-projects']) {
@@ -354,15 +331,10 @@ class DeckButton extends PanelMenu.Button {
         return item;
     }
 
-    get promptText() {
-        return this._entry?.text.trim() ?? '';
-    }
-
-    // Launch with the typed prompt (if any) in dir (null: default directory).
-    _submit(dir) {
-        this._h.launch(dir, [], this.promptText);
-        if (this._entry) this._entry.text = '';
+    // New session in dir (null: default directory).
+    _newSession(dir) {
         this.menu.close(true);
+        this._h.launch(dir, []);
     }
 
     setUserActions() {
@@ -377,8 +349,7 @@ class DeckButton extends PanelMenu.Button {
                 : new PopupMenu.PopupMenuItem(a.label);
             item.add_style_class_name('cd-user-action');
             item.connect('activate', () => {
-                this._h.runAction(a, this.promptText);
-                if (this._entry && a.command.includes('{prompt}')) this._entry.text = '';
+                this._h.runAction(a);
             });
             this._userActions.addMenuItem(item);
         }
@@ -466,6 +437,8 @@ class DeckButton extends PanelMenu.Button {
                 this._sessionItems = d.sessions.map(s => new SessionItem(s, x => this._h.focusSession(x)));
                 for (const it of this._sessionItems) this._sessions.addMenuItem(it);
             }
+            // rows are kept while their data is unchanged, so refresh the "x min ago" text
+            for (const it of this._sessionItems) it.tick();
             this._sessSep.visible = this._sessTitleItem.visible = d.sessions.length > 0;
             const nBusy = d.sessions.filter(s => s.status === 'busy').length;
             this._sessTitle.right.text = nBusy ? `${nBusy} working` : '';
@@ -479,7 +452,7 @@ class DeckButton extends PanelMenu.Button {
                 this._projects.menu.removeAll();
                 for (const p of list) {
                     this._projects.menu.addMenuItem(new ProjectItem(p,
-                        x => this._submit(x),
+                        x => this._newSession(x),
                         x => {
                             this.menu.close(true);
                             this._h.launch(x, ['--continue']);
@@ -518,8 +491,6 @@ class DeckButton extends PanelMenu.Button {
 
     _onDestroy() {
         this._stopTicker();
-        if (this._focusId) GLib.source_remove(this._focusId);
-        this._focusId = null;
         super._onDestroy();
     }
 });
