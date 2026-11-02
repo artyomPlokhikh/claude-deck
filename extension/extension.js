@@ -37,6 +37,9 @@ export default class DeckExtension extends Extension {
         this._last = null;
         this._cancellable = new Gio.Cancellable();
         this._source = null;
+        this._sourceDestroyId = 0;
+        this._notifications = new Map();
+        this._proc = null;
 
         this._userConfig = new UserConfig(() => this._button?.setUserActions());
         this._handlers = {
@@ -75,14 +78,30 @@ export default class DeckExtension extends Extension {
         Main.wm.removeKeybinding('toggle-menu');
         for (const id of this._settingsIds) this.settings.disconnect(id);
         this._settingsIds = null;
-        for (const id of [this._timer, this._debounce, this._rebuildId]) if (id) GLib.source_remove(id);
-        this._timer = this._debounce = this._rebuildId = null;
-        for (const m of this._monitors) m.cancel();
+        if (this._timer) GLib.source_remove(this._timer);
+        this._timer = null;
+        if (this._debounce) GLib.source_remove(this._debounce);
+        this._debounce = null;
+        if (this._rebuildId) GLib.source_remove(this._rebuildId);
+        this._rebuildId = null;
+        for (const [mon, id] of this._monitors) {
+            mon.disconnect(id);
+            mon.cancel();
+        }
         this._monitors = null;
         this._cancellable.cancel();
         this._cancellable = null;
-        this._source?.destroy();
+        // a running stats worker would otherwise outlive the extension
+        this._proc?.force_exit();
+        this._proc = null;
+        for (const [notification, ids] of this._notifications) ids.forEach(id => notification.disconnect(id));
+        this._notifications = null;
+        if (this._source) {
+            this._source.disconnect(this._sourceDestroyId);
+            this._source.destroy();
+        }
         this._source = null;
+        this._sourceDestroyId = 0;
         this._button?.destroy();
         this._button = null;
         this._userConfig.destroy();
@@ -130,10 +149,10 @@ export default class DeckExtension extends Extension {
         try {
             GLib.mkdir_with_parents(path, 0o755);
             const mon = Gio.File.new_for_path(path).monitor_directory(Gio.FileMonitorFlags.NONE, null);
-            mon.connect('changed', (_m, file) => {
+            const id = mon.connect('changed', (_m, file) => {
                 if (!only || file.get_basename() === only) this._queue();
             });
-            this._monitors.push(mon);
+            this._monitors.push([mon, id]);
         } catch (e) {
             console.warn(`claude-deck: cannot watch ${path}: ${e.message}`);
         }
@@ -156,6 +175,7 @@ export default class DeckExtension extends Extension {
         this._running = true;
         let proc;
         try {
+            // Stats run in a separate gjs process so parsing large transcripts never blocks the shell.
             proc = Gio.Subprocess.new(['gjs', '-m', this.dir.get_child('worker').get_child('stats-worker.js').get_path()],
                 Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
         } catch (e) {
@@ -163,8 +183,10 @@ export default class DeckExtension extends Extension {
             console.error(`claude-deck: ${e.message}`);
             return;
         }
+        this._proc = proc;
         proc.communicate_utf8_async(null, this._cancellable, (p, res) => {
             this._running = false;
+            if (this._proc === p) this._proc = null;
             try {
                 const [, out, err] = p.communicate_utf8_finish(res);
                 if (!p.get_successful()) throw new Error(err || 'stats worker failed');
@@ -204,8 +226,10 @@ export default class DeckExtension extends Extension {
                 icon: Gio.FileIcon.new(this.dir.get_child('icons').get_child(
                     `${this.settings.get_string('icon')}-symbolic.svg`)),
             });
-            this._source.connect('destroy', () => {
+            this._sourceDestroyId = this._source.connect('destroy', () => {
                 this._source = null;
+                this._sourceDestroyId = 0;
+                this._notifications?.clear();
             });
             Main.messageTray.add(this._source);
         }
@@ -215,7 +239,11 @@ export default class DeckExtension extends Extension {
             title: s.name || tildify(s.cwd),
             body: `${s.status === 'idle' ? 'Done' : 'Needs input'} · ${tildify(s.cwd)}`,
         });
-        notification.connect('activated', () => this.focusSession(s));
+        const ids = [
+            notification.connect('activated', () => this.focusSession(s)),
+            notification.connect('destroy', () => this._notifications?.delete(notification)),
+        ];
+        this._notifications.set(notification, ids);
         source.addNotification(notification);
     }
 

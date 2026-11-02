@@ -5,5 +5,5 @@
   "shell-version": ["50"],
   "settings-schema": "org.gnome.shell.extensions.claude-deck",
   "url": "https://github.com/artyomPlokhikh/claude-deck",
-  "version-name": "1.0"
+  "version-name": "1.1"
 }

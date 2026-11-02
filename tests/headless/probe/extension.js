@@ -200,6 +200,27 @@ export default class Probe {
         GLib.unlink(`${CONFIG}/style.css`);
         await wait(1500);
 
+        // a busy session turning idle sends a notification
+        const sessDir = `${GLib.getenv('CLAUDE_CONFIG_DIR')}/sessions`;
+        const en = Gio.File.new_for_path(sessDir).enumerate_children('standard::name', 0, null);
+        let info, flipped = false;
+        while ((info = en.next_file(null))) {
+            const path = `${sessDir}/${info.get_name()}`;
+            const [, raw] = GLib.file_get_contents(path);
+            const d = JSON.parse(new TextDecoder().decode(raw));
+            if (d.status === 'busy') {
+                d.status = 'idle';
+                d.statusUpdatedAt = Date.now();
+                writeFile(path, JSON.stringify(d));
+                flipped = true;
+            }
+        }
+        await wait(3000);
+        const notes = Main.messageTray.getSources().filter(src => src.title === 'Claude Code')
+            .flatMap(src => src.notifications);
+        this._check('finished session sends a notification', flipped && notes.length === 1 &&
+            notes[0].body.startsWith('Done'), notes.map(n => `${n.title}: ${n.body}`).join(' | '));
+
         // settings rebuild the button live
         const settings = this.ext.settings;
         settings.set_string('panel-position', 'left');
@@ -216,6 +237,8 @@ export default class Probe {
             Main.extensionManager.enableExtension(UUID);
             await wait(800);
         }
+        this._check('disable removes the notification source',
+            !Main.messageTray.getSources().some(src => src.title === 'Claude Code'), '');
         this._check('re-enabled after cycles', Main.extensionManager.lookup(UUID).state === 1,
             Main.extensionManager.lookup(UUID).error);
 

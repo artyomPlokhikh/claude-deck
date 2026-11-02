@@ -80,39 +80,40 @@ function sectionTitle(left) {
     return {row, right};
 }
 
-class LimitRow {
-    constructor(name) {
-        this.box = new St.BoxLayout({style_class: 'cd-limit', x_expand: true});
-        this.box.add_child(label(name, 'cd-limit-name'));
+const LimitRow = GObject.registerClass(
+class LimitRow extends St.BoxLayout {
+    _init(name) {
+        super._init({style_class: 'cd-limit', x_expand: true});
+        this.add_child(label(name, 'cd-limit-name'));
         const track = new St.BoxLayout({style_class: 'cd-bar-track', y_align: Clutter.ActorAlign.CENTER});
-        this.fill = new St.Widget({style_class: 'cd-bar-fill'});
-        track.add_child(this.fill);
-        this.box.add_child(track);
+        this._fill = new St.Widget({style_class: 'cd-bar-fill'});
+        track.add_child(this._fill);
+        this.add_child(track);
         this.pct = label('-', 'cd-limit-pct');
-        this.box.add_child(this.pct);
-        this.reset = label('', 'cd-limit-reset', {x_expand: true, x_align: Clutter.ActorAlign.END});
-        this.box.add_child(this.reset);
+        this.add_child(this.pct);
+        this._reset = label('', 'cd-limit-reset', {x_expand: true, x_align: Clutter.ActorAlign.END});
+        this.add_child(this._reset);
     }
 
     update(l) {
         const pct = l && l.pct !== null && l.pct !== undefined ? Math.max(0, Math.min(100, l.pct)) : null;
         this.pct.text = pct === null ? '-' : `${Math.round(pct)}%`;
-        this.fill.set_style(`width: ${Math.round(BAR_PX * (pct ?? 0) / 100)}px;`);
-        this.fill.style_class = `cd-bar-fill ${level(pct ?? 0)}`;
+        this._fill.set_style(`width: ${Math.round(BAR_PX * (pct ?? 0) / 100)}px;`);
+        this._fill.style_class = `cd-bar-fill ${level(pct ?? 0)}`;
         const r = fmtReset(l?.reset);
-        this.reset.text = r ? `↻ ${r}` : '';
+        this._reset.text = r ? `↻ ${r}` : '';
     }
-}
+});
 
-class Tile {
-    constructor(caption) {
-        this.box = new St.BoxLayout({style_class: 'cd-tile', orientation: Clutter.Orientation.VERTICAL,
-            x_expand: true});
+const Tile = GObject.registerClass(
+class Tile extends St.BoxLayout {
+    _init(caption) {
+        super._init({style_class: 'cd-tile', orientation: Clutter.Orientation.VERTICAL, x_expand: true});
         this.value = new St.Label({text: '-', style_class: 'cd-tile-value'});
-        this.box.add_child(this.value);
-        this.box.add_child(new St.Label({text: caption, style_class: 'cd-tile-caption'}));
+        this.add_child(this.value);
+        this.add_child(new St.Label({text: caption, style_class: 'cd-tile-caption'}));
     }
-}
+});
 
 const SessionItem = GObject.registerClass(
 class SessionItem extends PopupMenu.PopupBaseMenuItem {
@@ -243,8 +244,8 @@ class DeckButton extends PanelMenu.Button {
         if (o['show-limits']) {
             this._five = new LimitRow('5h');
             this._seven = new LimitRow('7d');
-            this._fiveItem = new StaticItem(this._five.box, 'cd-limits');
-            this._sevenItem = new StaticItem(this._seven.box, 'cd-limits');
+            this._fiveItem = new StaticItem(this._five, 'cd-limits');
+            this._sevenItem = new StaticItem(this._seven, 'cd-limits');
             m.addMenuItem(this._fiveItem);
             m.addMenuItem(this._sevenItem);
             const off = new St.BoxLayout({style_class: 'cd-row', x_expand: true});
@@ -274,7 +275,7 @@ class DeckButton extends PanelMenu.Button {
                 tools: new Tile('tool calls'),
                 out: new Tile('output'),
             };
-            for (const t of Object.values(this._tiles)) tiles.add_child(t.box);
+            for (const t of Object.values(this._tiles)) tiles.add_child(t);
             m.addMenuItem(new StaticItem(tiles, 'cd-today'));
         }
 
