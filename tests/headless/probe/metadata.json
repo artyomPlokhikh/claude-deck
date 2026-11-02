@@ -1,0 +1,1 @@
+{"uuid": "probe@claude-deck.test", "name": "Claude Deck test probe", "description": "Drives the headless test", "shell-version": ["50"]}
